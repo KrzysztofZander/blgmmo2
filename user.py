@@ -2,8 +2,9 @@ from bge import logic, types, events, constraints
 import random
 import os
 import aud
-from pokemon import Bulbasaur , Squirtle , Scyther , Charmander , Jigglypuff , Charizard , Psyduck , Cubone , Meow
-from pokemon import Mewtwo , Pikachu , Charmeleon , Wartortle , Blastoise , Ivysaur , Venusaur , Oddish
+from pokemon import *
+#from pokemon import 
+#from pokemon import Mewtwo , Pikachu , Charmeleon , Wartortle , Blastoise , Ivysaur , Venusaur , Oddish
 
 scene = logic.getCurrentScene()
 
@@ -111,10 +112,12 @@ class User:
                     }
         return movement
     
-
     def span_pokemon(self):
         print('SPAAAWN')
-
+        print('SPAAAWN')
+        print('SPAAAWN')
+        active_scenes = logic.getSceneList()
+        print(active_scenes)
         pokeball  = scene.objects['pokeball']
         
         pokeball.suspendDynamics()
@@ -126,15 +129,12 @@ class User:
         pokebal_sound = device.play(sound)
         pokebal_sound.volume = 0.2
 
-        pokebalOpenSpawn = scene.addObject('pokeball_spawner', pokeball , 800)
+        pokebalOpenSpawn = scene.addObject('pokeball_spawner', pokeball , 200)
         pokebalOpenSpawn.playAction( 'pokeball_spawner_action', 0, 60 , 0 , speed=2 )
 
         spawedPok = [x for x in scene.objects if x.name == 'Scythesr_skeleton']
 
-
-        #Charizard(level=2), Jigglypuff(level=2) , Scyther(level=2),Squirtle( level=2 ),Bulbasaur( level=2 ) , Charmander(level=2) ]
-
-        test_spawned_pokemon =  Oddish(level=2) #random.choice(test) 
+        test_spawned_pokemon = random.choice( test_Poke ) 
 
         if len(spawedPok ) == 0: 
 
@@ -211,58 +211,62 @@ class User:
 
     def update_animation(self):
 
-        if self.unstopable_animation_tog == True:
+
+        try:
+            if self.unstopable_animation_tog == True:
+                
+                if self.animation == 'maniek_throw' and self.avatar.isPlayingAction() and int(self.avatar.getActionFrame() ) == 27:
+                    self.avatar.setActionFrame(31.0)
+                    self.throw_object('pokeball')
+
+
+                elif not self.avatar.isPlayingAction():
+                    self.lock_movement = False
+                    self.unstopable_animation_tog = False
+
+            elif self.jump:
+                if self.avatar['jump'] == False and self.avatar.isPlayingAction():
+                    # landing animation
+                    self.lock_movement = True
+
+                elif self.avatar['jump'] == False and not self.avatar.isPlayingAction():
+                    # end of jump
+                    self.lock_movement = False
+                    self.jump = False
+                    self.avatar['endJump'] = False
+                    self.avatar['fallDown'] = False 
+
             
-            if self.animation == 'maniek_throw' and self.avatar.isPlayingAction() and int(self.avatar.getActionFrame() ) == 27:
-                self.avatar.setActionFrame(31.0)
-                self.throw_object('pokeball')
+            elif self.no_response_time >= 1200:
+                
+                anim = random.choice(self.pause_animation)
 
-
-            elif not self.avatar.isPlayingAction():
-                self.lock_movement = False
-                self.unstopable_animation_tog = False
-
-        elif self.jump:
-            if self.avatar['jump'] == False and self.avatar.isPlayingAction():
-                # landing animation
-                self.lock_movement = True
-
-            elif self.avatar['jump'] == False and not self.avatar.isPlayingAction():
-                # end of jump
-                self.lock_movement = False
-                self.jump = False
-                self.avatar['endJump'] = False
-                self.avatar['fallDown'] = False 
-
-        
-        elif self.no_response_time >= 1200:
+                self.avatar.playAction( self.avatar['name']+'_pause_'+anim["name"] , 0, anim['end'] , play_mode=0 )
+                # reset no response
+                self.no_response_time = 0
             
-            anim = random.choice(self.pause_animation)
+            elif self.animation == 'move':
+                # reset no response
+                self.no_response_time = 0
 
-            self.avatar.playAction( self.avatar['name']+'_pause_'+anim["name"] , 0, anim['end'] , play_mode=0 )
-            # reset no response
-            self.no_response_time = 0
-        
-        elif self.animation == 'move':
-            # reset no response
-            self.no_response_time = 0
+                walkrun = 'run' if self.run else 'walk'
 
-            walkrun = 'run' if self.run else 'walk'
-
-            move_types = {
-                "walk":{
-                    "name":"walk",
-                    "end": self.pokemon_avatar.anim_walk[1]
-                },
-                "run":{
-                    "name":"run",
-                    "end":self.pokemon_avatar.anim_run[1]
+                move_types = {
+                    "walk":{
+                        "name":"walk",
+                        "end": self.pokemon_avatar.anim_walk[1]
+                    },
+                    "run":{
+                        "name":"run",
+                        "end":self.pokemon_avatar.anim_run[1]
+                    }
                 }
-            }
 
-            self.avatar.playAction( self.avatar['name']+'_'+move_types[walkrun]['name'] , 0 , move_types[walkrun]['end'] , play_mode=1 , priority=10  )
+                self.avatar.playAction( self.avatar['name']+'_'+move_types[walkrun]['name'] , 0 , move_types[walkrun]['end'] , play_mode=1 , priority=10  )
 
-        elif self.animation == 'stand' and 'pause' not in self.avatar.getActionName() or not self.avatar.isPlayingAction():
-            
-            self.no_response_time+=1
-            self.avatar.playAction( self.avatar['name']+'_stand' , 0 , self.pokemon_avatar.anim_stand[1], play_mode=1 , priority=10 )
+            elif self.animation == 'stand' and 'pause' not in self.avatar.getActionName() or not self.avatar.isPlayingAction():
+                
+                self.no_response_time+=1
+                self.avatar.playAction( self.avatar['name']+'_stand' , 0 , self.pokemon_avatar.anim_stand[1], play_mode=1 , priority=10 )
+        except :
+            pass
